@@ -39,6 +39,12 @@ from detectron2.evaluation import (
 )
 from detectron2.modeling import GeneralizedRCNNWithTTA
 
+from detectron2.data.datasets import register_coco_instances
+
+# for america chronicalling dataset (it often throws image pixels exceed limit error)
+import PIL
+PIL.Image.MAX_IMAGE_PIXELS = 330364685
+
 
 def build_evaluator(cfg, dataset_name, output_folder=None):
     """
@@ -130,7 +136,27 @@ def setup(args):
 
 def main(args):
     cfg = setup(args)
+    
+    sm_root = "/home/ec2-user/SageMaker/"
+    train_img_dir = sm_root + "Data/NewspaperNet/train"
+    test_img_dir = sm_root + "Data/NewspaperNet/test"
+    train_annotation = sm_root + "Data/NewspaperNet/annotations/train.json"
+    test_annotation = sm_root + "Data/NewspaperNet/annotations/test.json"
 
+    
+
+    register_coco_instances(
+        "newspaper_train", 
+        {}, 
+        train_annotation, 
+        train_img_dir)
+
+    register_coco_instances(
+        "newspaper_test",
+        {}, 
+        test_annotation, 
+        test_img_dir)
+    
     if args.eval_only:
         model = Trainer.build_model(cfg)
         DetectionCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(
